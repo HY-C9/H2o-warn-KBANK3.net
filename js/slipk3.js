@@ -2,10 +2,10 @@
 function loadFonts() {
     const fonts = [
         //SFThonburi
-        new FontFace('SFThonburiLight', 'url(../assets/fonts/SFThonburi.woff)'),
-        new FontFace('SFThonburiRegular', 'url(../assets/fonts/SFThonburi-Regular.woff)'),
-        new FontFace('SFThonburiSemiBold', 'url(../assets/fonts/SFThonburi-Semibold.woff)'),
-        new FontFace('SFThonburiBold', 'url(../assets/fonts/SFThonburi-Bold.woff)'),
+        new FontFace('SFThonburiLight', 'url(assets/fonts/SFThonburi.woff)'),
+        new FontFace('SFThonburiRegular', 'url(assets/fonts/SFThonburi-Regular.woff)'),
+        new FontFace('SFThonburiSemiBold', 'url(assets/fonts/SFThonburi-Semibold.woff)'),
+        new FontFace('SFThonburiBold', 'url(assets/fonts/SFThonburi-Bold.woff)'),
 
     ];
 
