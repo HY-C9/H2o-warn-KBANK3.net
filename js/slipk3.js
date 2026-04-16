@@ -1,18 +1,22 @@
-// ฟังก์ชันเพื่อโหลดฟอนต์
+// js/slipk4.js
+
+// ฟังก์ชันเพื่อโหลดฟอนต์ (แบบกันพัง - ถ้าตัวไหนโหลดไม่ได้ให้ข้ามไปโหลดตัวอื่นต่อ)
 function loadFonts() {
     const fonts = [
-        //SFThonburi
         new FontFace('SFThonburiLight', 'url(assets/fonts/SFThonburi.woff)'),
         new FontFace('SFThonburiRegular', 'url(assets/fonts/SFThonburi-Regular.woff)'),
         new FontFace('SFThonburiSemiBold', 'url(assets/fonts/SFThonburi-Semibold.woff)'),
-        new FontFace('SFThonburiBold', 'url(assets/fonts/SFThonburi-Bold.woff)'),
-
+        new FontFace('SFThonburiBold', 'url(assets/fonts/SFThonburi-Bold.woff)')
     ];
 
-    // โหลดฟอนต์ทั้งหมดและเพิ่มเข้าไปที่ document
-    return Promise.all(fonts.map(font => font.load())).then(function(loadedFonts) {
-        loadedFonts.forEach(function(font) {
-            document.fonts.add(font);
+    // ใช้ Promise.allSettled เพื่อโหลดแยกกัน ตัวไหนพังก็โชว์ Error ใน Console แต่ตัวอื่นรอด
+    return Promise.allSettled(fonts.map(font => font.load())).then(function(results) {
+        results.forEach(function(result, index) {
+            if (result.status === 'fulfilled') {
+                document.fonts.add(result.value);
+            } else {
+                console.error('❌ หาไฟล์ฟอนต์นี้ไม่เจอ (เช็คชื่อไฟล์/Path):', fonts[index].family);
+            }
         });
     });
 }
@@ -22,35 +26,27 @@ window.onload = function() {
     setCurrentDateTime();
     // โหลดฟอนต์และอัปเดตการแสดงผล
     loadFonts().then(function() {
-        // ใช้ document.fonts.ready เพื่อให้มั่นใจว่าฟอนต์ถูกโหลดทั้งหมด
         document.fonts.ready.then(function() {
-            updateDisplay(); // วาดใหม่ด้วยฟอนต์ที่ถูกต้องหลังจากฟอนต์ถูกโหลดเสร็จ
+            updateDisplay(); 
         });
-    }).catch(function() {
-        // หากฟอนต์โหลดไม่สำเร็จ จะยังคงแสดงผลได้
-        updateDisplay();
     });
 };
-
 
 function setCurrentDateTime() {
     const now = new Date();
     const localDateTime = now.toLocaleString('sv-SE', { timeZone: 'Asia/Bangkok', hour12: false });
     
-    const formattedDateTime = localDateTime.substring(0, 16); // ตัดส่วนวินาทีออก
+    const formattedDateTime = localDateTime.substring(0, 16); 
     document.getElementById('datetime').value = formattedDateTime;
-    
-    const formattedDateTime1 = localDateTime.substring(0, 16); // ตัดส่วนวินาทีออก
     document.getElementById('datetime1').value = formattedDateTime;
 
-    // ตั้งค่าเวลาที่มากกว่า 1 นาที
-    const oneMinuteLater = new Date(now.getTime() + 60000); // เพิ่ม 1 นาที (60,000 มิลลิวินาที)
+    // ตั้งค่าเวลาหน้าจอ (บวก 1 นาที)
+    const oneMinuteLater = new Date(now.getTime() + 60000); 
     const hours = oneMinuteLater.getHours().toString().padStart(2, '0');
     const minutes = oneMinuteLater.getMinutes().toString().padStart(2, '0');
     const formattedTimePlusOne = `${hours}:${minutes}`;
     document.getElementById('datetime_plus_one').value = formattedTimePlusOne;
 }
-
 
 function padZero(number) {
     return number < 10 ? '0' + number : number;
@@ -67,23 +63,19 @@ function formatDateWithDay(date) {
     return `${dayName}ที่ ${day} ${month}`;
 }
 
-
 function formatDate(date) {
     const options = { day: 'numeric', month: 'short', year: '2-digit' };
     let formattedDate = new Date(date).toLocaleDateString('th-TH', options);
     formattedDate = formattedDate.replace(/ /g, ' ').replace(/\./g, '');
     const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-    const day = parseInt(formattedDate.split(' ')[0]); // แปลงเป็น int เพื่อเอาเลข 0 ออก
+    const day = parseInt(formattedDate.split(' ')[0]); 
     const month = months[new Date(date).getMonth()];
     const year = formattedDate.split(' ')[2];
     return `${day} ${month} ${year}`;
 }
 
-
-
 let qrCodeImage = null;
 let powerSavingMode = false;
-
 
 function handlePaste(event) {
     const items = event.clipboardData.items;
@@ -105,25 +97,24 @@ function handlePaste(event) {
 }
 
 function updateDisplay() {
-    const backgroundSelect = document.getElementById('backgroundSelect').value || '';
+    const backgroundSelect = document.getElementById('backgroundSelect')?.value || '';
+    const datetime = document.getElementById('datetime')?.value || '-';
+    const datetime1 = document.getElementById('datetime1')?.value || '-';
+    const datetimePlusOne = document.getElementById('datetime_plus_one')?.value || '-';
+    const batteryLevel = document.getElementById('battery')?.value || '100';
+    const money01 = document.getElementById('money01')?.value || '-';
+    const money02 = document.getElementById('money02')?.value || '-';
+    const senderaccount1 = document.getElementById('senderaccount1')?.value || '-';
 
-    const datetime = document.getElementById('datetime').value || '-';
-    const datetime1 = document.getElementById('datetime1').value || '-';
-    const datetimePlusOne = document.getElementById('datetime_plus_one').value || '-';
-    const batteryLevel = document.getElementById('battery').value || '100';
-    const money01 = document.getElementById('money01').value || '-';
-    const money02 = document.getElementById('money02').value || '-';
+    const formattedDate = formatDate(datetime.substring(0, 10)); 
+    const formattedDateWithDay = formatDateWithDay(datetime.substring(0, 10)); 
+    const formattedTime = datetime.substring(11, 16); 
+    const formattedTime1 = datetime1.substring(11, 16); 
+    const formattedTimePlusOne = datetimePlusOne; 
 
-    const formattedDate = formatDate(datetime.substring(0, 10)); // แปลงวันที่เป็นรูปแบบ DD/MM/YY
-    const formattedDateWithDay = formatDateWithDay(datetime.substring(0, 10)); // แปลงวันที่เป็นรูปแบบ วันอังคารที่ 3 กันยายน
-    const formattedTime = datetime.substring(11, 16); // เอาเฉพาะ ชั่วโมง:นาที
-    const formattedTime1 = datetime1.substring(11, 16); // เวลาเงินเข้า 2
-    const formattedTimePlusOne = datetimePlusOne; // อยู่ในรูปแบบ HH:mm แล้ว
-
-    // คำนวณความต่างของเวลาและสร้างข้อความ timeMessage สำหรับเงินเข้า 1
-    let timeDifference = Math.floor((new Date(`1970-01-01T${formattedTimePlusOne}:00`) - new Date(`1970-01-01T${formattedTime}:00`)) / 60000);
+    // คำนวณเวลา ยอดที่ 1
+    let timeDifference = Math.floor((new Date(`1970-01-01T${formattedTimePlusOne}:00Z`) - new Date(`1970-01-01T${formattedTime}:00Z`)) / 60000);
     let timeMessage = "";
-
     if (timeDifference >= 60) {
         let hours = Math.floor(timeDifference / 60);
         timeMessage = `${hours} ชั่วโมงที่แล้ว`;
@@ -135,10 +126,9 @@ function updateDisplay() {
         timeMessage = "ตอนนี้";
     }
 
-    // คำนวณความต่างของเวลาและสร้างข้อความ timeMessage2 สำหรับเงินเข้า 2
-    let timeDifference2 = Math.floor((new Date(`1970-01-01T${formattedTimePlusOne}:00`) - new Date(`1970-01-01T${formattedTime1}:00`)) / 60000);
+    // คำนวณเวลา ยอดที่ 2
+    let timeDifference2 = Math.floor((new Date(`1970-01-01T${formattedTimePlusOne}:00Z`) - new Date(`1970-01-01T${formattedTime1}:00Z`)) / 60000);
     let timeMessage2 = "";
-
     if (timeDifference2 >= 60) {
         let hours = Math.floor(timeDifference2 / 60);
         timeMessage2 = `${hours} ชั่วโมงที่แล้ว`;
@@ -150,57 +140,36 @@ function updateDisplay() {
         timeMessage2 = "ตอนนี้";
     }
 
-
-    
-    const senderaccount1 = document.getElementById('senderaccount1').value || '-';
-    
-
-    
-  
-
     const canvas = document.getElementById('canvas');
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    // Load background image
     const backgroundImage = new Image();
     backgroundImage.src = backgroundSelect;
+    
     backgroundImage.onload = function() {
-        // เคลียร์แคนวาส
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // วาดภาพพื้นหลัง
         ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
-        // วาดข้อความสำหรับเงินเข้า 1
-        drawText(ctx, `   ${formattedDateWithDay}   `, 308, 167.8,33.50, 'SFThonburiSemiBold', '#ffffff','center', 24, 3, 0, 0, 800, 0);
+        // วันที่หน้าจอ
+        drawText(ctx, `   ${formattedDateWithDay}   `, 308, 167.8, 33.50, 'SFThonburiSemiBold', '#ffffff', 'center', 24, 3, 0, 0, 800, 0);
+        // เวลาหน้าจอ
+        drawText(ctx, `${formattedTimePlusOne}`, 295, 298.8, 138.50, 'SFThonburiSemiBold', '#ffffff', 'center', 1.5, 3, 0, 0, 800, -7);
 
-        drawText(ctx, `${formattedTimePlusOne}`, 295, 298.8,138.50, 'SFThonburiSemiBold', '#ffffff','center', 1.5, 3, 0, 0, 800, -7);
+        // ข้อมูลเงินเข้า 1
+        drawText(ctx, `รายการเงินเข้า`, 107.8, 451.8, 21.50, 'SFThonburiBold', '#000000', 'left', 1.5, 3, 0, 0, 800, 0);
+        drawText(ctx, `${timeMessage}`, 547.5, 451.8, 18.50, 'SFThonburiRegular', '#6f8590', 'right', 1.5, 3, 0, 0, 800, 0);
+        drawText(ctx, `บัญชี ${senderaccount1} จำนวนเงิน ${money01} บาท วันที่ ${formattedDate} ${formattedTime} น.<br>`, 107.8, 481.8, 20.50, 'SFThonburiRegular', '#000000', 'left', 31.5, 3, 0, 0, 420, 0);
 
-        drawText(ctx, `รายการเงินเข้า`, 107.8, 451.8,21.50, 'SFThonburiBold', '#000000', 'left', 1.5, 3, 0, 0, 800, 0);
-        drawText(ctx, `${timeMessage}`, 547.5, 451.8,18.50, 'SFThonburiRegular', '#6f8590', 'right', 1.5, 3, 0, 0, 800, 0);
+        // ข้อมูลเงินเข้า 2
+        drawText(ctx, `รายการเงินเข้า`, 107.8, 588, 21.50, 'SFThonburiBold', '#000000', 'left', 1.5, 3, 0, 0, 800, 0);
+        drawText(ctx, `${timeMessage2}`, 547.5, 588, 18.50, 'SFThonburiRegular', '#6f8590', 'right', 1.5, 3, 0, 0, 800, 0);
+        drawText(ctx, `บัญชี ${senderaccount1} จำนวนเงิน ${money02} บาท วันที่ ${formattedDate} ${formattedTime1} น.<br>`, 107.8, 617.8, 20.50, 'SFThonburiRegular', '#000000', 'left', 31.5, 3, 0, 0, 420, 0);
 
-        drawText(ctx, `บัญชี ${senderaccount1} จำนวนเงิน ${money01} บาท วันที่ ${formattedDate} ${formattedTime} น.<br>
-        `, 107.8, 481.8,20.50, 'SFThonburiRegular', '#000000', 'left', 31.5, 3, 0, 0, 420, 0);
-
-        // วาดข้อความสำหรับเงินเข้า 2
-        drawText(ctx, `รายการเงินเข้า`, 107.8, 588,21.50, 'SFThonburiBold', '#000000', 'left', 1.5, 3, 0, 0, 800, 0);
-        drawText(ctx, `${timeMessage2}`, 547.5, 588,18.50, 'SFThonburiRegular', '#6f8590', 'right', 1.5, 3, 0, 0, 800, 0);
-
-        drawText(ctx, `บัญชี ${senderaccount1} จำนวนเงิน ${money02} บาท วันที่ ${formattedDate} ${formattedTime1} น.<br>
-        `, 107.8, 617.8,20.50, 'SFThonburiRegular', '#000000', 'left', 31.5, 3, 0, 0, 420, 0);
-
-
-
-
-
-
-   
         if (qrCodeImage) {
-            ctx.drawImage(qrCodeImage, 0, 130.3, 555, 951); // Adjust position and size as needed
+            ctx.drawImage(qrCodeImage, 0, 130.3, 555, 951); 
         }
 
-
-        // Draw battery
         drawBattery(ctx, batteryLevel, powerSavingMode);
     };
 }
@@ -209,15 +178,13 @@ function drawText(ctx, text, x, y, fontSize, fontFamily, color, align, lineHeigh
     ctx.font = `${fontSize}px ${fontFamily}`;
     ctx.fillStyle = color;
     ctx.textAlign = 'left';
-    ctx.shadowColor = shadowColor;
-    ctx.shadowBlur = shadowBlur;
+    ctx.shadowColor = shadowColor || 'transparent';
+    ctx.shadowBlur = shadowBlur || 0;
 
-    // แยกข้อความตาม <br>
     const paragraphs = text.split('<br>');
     let currentY = y;
 
     paragraphs.forEach(paragraph => {
-        // ใช้ Intl.Segmenter โดยไม่กำหนด locale เพื่อรองรับหลายภาษา
         const segmenter = new Intl.Segmenter(undefined, { granularity: 'word' });
         const words = [...segmenter.segment(paragraph)].map(segment => segment.segment);
 
@@ -237,7 +204,7 @@ function drawText(ctx, text, x, y, fontSize, fontFamily, color, align, lineHeigh
             }
         });
         if (currentLine) {
-            lines.push(currentLine.trimStart()); // ตัดช่องว่างที่ขึ้นต้นบรรทัดใหม่ออก
+            lines.push(currentLine.trimStart()); 
         }
 
         lines.forEach((line, index) => {
@@ -256,12 +223,10 @@ function drawText(ctx, text, x, y, fontSize, fontFamily, color, align, lineHeigh
             }
         });
 
-        // เพิ่มระยะห่างหลังจากขึ้นบรรทัดใหม่ด้วย <br>
-        currentY + lineHeight;
+        // ✅ แก้บั๊กตรงนี้: บวก Y เพิ่มเมื่อเจอ <br>
+        currentY += lineHeight; 
     });
 }
-
-
 
 function drawTextLine(ctx, text, x, y, letterSpacing) {
     if (!letterSpacing) {
@@ -280,78 +245,61 @@ function drawTextLine(ctx, text, x, y, letterSpacing) {
     });
 }
 
-
 function drawBattery(ctx, batteryLevel, powerSavingMode) {
-    // วาดกรอบแบตเตอรี่ด้วยมุมโค้งมน
-    ctx.lineWidth = 2; // กำหนดความหนาของเส้นเป็น 2 พิกเซล
-    ctx.strokeStyle = '#9b9b9b'; // กำหนดสีเส้นขอบเป็นสีเทา
-    ctx.fillStyle = '#ffffff'; // กำหนดสีพื้นหลังของกรอบแบตเตอรี่เป็นสีขาว
+    ctx.lineWidth = 2; 
+    ctx.strokeStyle = '#9b9b9b'; 
+    ctx.fillStyle = '#ffffff'; 
 
-
-
-    // กำหนดสีแบตเตอรี่ตามระดับและโหมดประหยัดพลังงาน
-    let batteryColor = '#ffffff'; // สีเขียวสำหรับโหมดปกติ
+    let batteryColor = '#ffffff'; 
     if (batteryLevel <= 20) {
-        batteryColor = '#ff0000'; // สีแดงสำหรับแบตเตอรี่ต่ำ
+        batteryColor = '#ff0000'; 
     } else if (powerSavingMode) {
-        batteryColor = '#fccd0e'; // สีส้มสำหรับโหมดประหยัดพลังงาน
+        batteryColor = '#fccd0e'; 
     }
 
-// วาดการเติมแบตเตอรี่
-const fillWidth = (batteryLevel / 100) * 31; // คำนวณความกว้างของการเติมแบตเตอรี่ตามระดับแบตเตอรี่
-const x = 511.5;
-const y = 32.4;
-const height = 13.8;
-const radius = 4; // รัศมีของโค้ง
+    const fillWidth = (batteryLevel / 100) * 31; 
+    const x = 511.5;
+    const y = 32.4;
+    const height = 13.8;
+    const radius = 4; 
 
-ctx.fillStyle = batteryColor; // กำหนดสีการเติมแบตเตอรี่ตามที่คำนวณ
+    ctx.fillStyle = batteryColor; 
 
-// เริ่มวาดรูปร่างที่มีมุมโค้ง
-ctx.beginPath(); // เริ่มวาดรูปใหม่
-ctx.moveTo(x, y + radius); // เริ่มต้นที่มุมบนซ้าย
-ctx.lineTo(x, y + height - radius); // วาดเส้นตรงไปที่มุมล่างซ้าย
-ctx.arcTo(x, y + height, x + radius, y + height, radius); // วาดส่วนโค้งที่มุมล่างซ้าย
-ctx.lineTo(x + fillWidth - radius, y + height); // วาดเส้นตรงไปที่มุมล่างขวา
-ctx.arcTo(x + fillWidth, y + height, x + fillWidth, y + height - radius, radius); // วาดส่วนโค้งที่มุมล่างขวา
-ctx.lineTo(x + fillWidth, y + radius); // วาดเส้นตรงขึ้นไปที่มุมบนขวา
-ctx.arcTo(x + fillWidth, y, x + fillWidth - radius, y, radius); // วาดส่วนโค้งที่มุมบนขวา
-ctx.lineTo(x + radius, y); // วาดเส้นตรงไปที่มุมบนซ้าย
-ctx.arcTo(x, y, x, y + radius, radius); // วาดส่วนโค้งที่มุมบนซ้าย
-ctx.closePath(); // ปิดเส้นที่วาดเพื่อสร้างรูปร่างปิด
-ctx.fill(); // เติมสีการเติมแบตเตอรี่ะสูง 16
+    ctx.beginPath(); 
+    ctx.moveTo(x, y + radius); 
+    ctx.lineTo(x, y + height - radius); 
+    ctx.arcTo(x, y + height, x + radius, y + height, radius); 
+    ctx.lineTo(x + fillWidth - radius, y + height); 
+    ctx.arcTo(x + fillWidth, y + height, x + fillWidth, y + height - radius, radius); 
+    ctx.lineTo(x + fillWidth, y + radius); 
+    ctx.arcTo(x + fillWidth, y, x + fillWidth - radius, y, radius); 
+    ctx.lineTo(x + radius, y); 
+    ctx.arcTo(x, y, x, y + radius, radius); 
+    ctx.closePath(); 
+    ctx.fill(); 
 }
-
-
-
-
-
 
 function togglePowerSavingMode() {
     powerSavingMode = !powerSavingMode;
     const powerSavingButton = document.getElementById('powerSavingMode');
-    powerSavingButton.classList.toggle('active', powerSavingMode);
+    if (powerSavingButton) powerSavingButton.classList.toggle('active', powerSavingMode);
     updateDisplay();
 }
 
 function updateBatteryDisplay() {
-    const batteryLevel = document.getElementById('battery').value;
-    document.getElementById('battery-level').innerText = batteryLevel;
+    const batteryLevel = document.getElementById('battery')?.value || '100';
+    const levelText = document.getElementById('battery-level');
+    if (levelText) levelText.innerText = batteryLevel;
 }
 
-function downloadImage() {
+window.downloadImage = function() {
     const canvas = document.getElementById('canvas');
+    if(!canvas) return;
     const link = document.createElement('a');
     link.href = canvas.toDataURL('image/png');
-    link.download = 'canvas_image.png';
+    link.download = 'slip_kbank3.png';
     link.click();
 }
 
-document.getElementById('generate').addEventListener('click', updateDisplay);
-
-function drawImage(ctx, imageUrl, x, y, width, height) {
-    const image = new Image();
-    image.src = imageUrl;
-    image.onload = function() {
-        ctx.drawImage(image, x, y, width, height);
-    };
-}
+// ผูกปุ่มสร้าง (ถ้ามี)
+document.getElementById('generate')?.addEventListener('click', updateDisplay);
